@@ -12,10 +12,34 @@ is why the hands, gears and moon phases come out crisp rather than as a
 photograph of a monitor.
 
 - 79 dials, 22 makers, one page
+- 9 of them **co-authored** — Claude Opus 5.5 planned them, Qwen3.8 Flash-Next IQ3_S wrote the
+  code — given their own section and a credit line on every card
+- a section on the **`/clock` skill** that produced most of them
 - 640×640 transparent PNGs in `assets/img/`
 - filter, lightbox, and a light/dark matte behind each dial
 - no framework, no build step, no external requests — GitHub Pages serves the
   files as they are
+
+## The `/clock` skill
+
+Most of these dials come from a [pi](https://pi.dev) skill invoked as `/clock`: a fixed
+prompt handed to whatever model is being used, so every maker starts from the same brief —
+three original analogue clocks in Lua for Conky, one Hamilton-style, one openworked skeleton,
+one genuinely one-of-a-kind, each kept in its own `~/.config/conky/clocks/<model-name>/`
+directory, and with an explicit instruction not to look at any clock already on the machine.
+That is why the same three subjects keep reappearing across makers. A companion skill,
+`/run-clock <model>`, runs the evaluation against a local model, supervises it, and adds the
+finished clocks to the gallery.
+
+## Co-authored dials
+
+Nine dials are not evaluations. Claude Opus 5.5 wrote the design and the plan file — colours,
+centres, sizes, gear helpers, precomputed geometry, and for the Astral set the shared astronomy
+module — and Qwen3.8 Flash-Next IQ3_S wrote every line of code from it. They are listed in their
+own section at the top of the page, in three sets, with the plan file named beside each set:
+`PLAN-opus-5.5-2026-10-18.md`, `PLAN-opus-5.5-2026-10-18-set2.md` and
+`PLAN-opus-5.5-2026-10-21-astral.md`. The credit data lives in `PLANERS` in
+`tools/build_site.py`.
 
 ## The dials
 

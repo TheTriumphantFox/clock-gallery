@@ -24,7 +24,7 @@ OUT = ROOT / "index.html"
 JUNK = re.compile(
     r"^("
     r"[\w.\-]+\.lua"          # vantage-field.lua
-    r"|conky clock"           # "Conky clock"
+    r"|conky clock\b.*"        # "Conky clock", "Conky clock (the Astral set)…"
     r"|load error"
     r"|\d+b\b.*"              # bare model-ish strings handled below too
     r")$",
@@ -39,6 +39,104 @@ def model_of(dial_id: str) -> str:
 
 def slug_of(dial_id: str) -> str:
     return dial_id.split("/")[-1]
+
+
+# Dials that two models made together. The clock tree's own README is the
+# source of this: Claude Opus 5.5 wrote the design and the plan file, and
+# Qwen3.8 Flash-Next IQ3_S wrote every line of code from it. These are listed
+# in their own section so the co-author credit is impossible to miss, and they
+# are left out of the single-author section for their folder.
+PLANERS = {
+    "set1": {
+        "title": "First Opus plan",
+        "date": "2026-10-18",
+        "plan": "PLAN-opus-5.5-2026-10-18.md",
+        "note": "Claude Opus 5.5 specified every colour, centre and size, the gear helper, "
+                "and precomputed geometry such as the 60 points where minute rays meet the "
+                "Ventura's asymmetric dial edge. Qwen3.8 Flash-Next IQ3_S wrote every line "
+                "of code from that plan in three turns.",
+        "ids": ["qwen3.8-flash-next-iq3s/ventura-shield",
+                "qwen3.8-flash-next-iq3s/going-train",
+                "qwen3.8-flash-next-iq3s/modulus"],
+    },
+    "set2": {
+        "title": "Second Opus plan",
+        "date": "2026-10-18",
+        "plan": "PLAN-opus-5.5-2026-10-18-set2.md",
+        "note": "Same split, built in one 18-minute delegated run with no feedback rounds.",
+        "ids": ["qwen3.8-flash-next-iq3s/intra-chrono",
+                "qwen3.8-flash-next-iq3s/flying-tourbillon",
+                "qwen3.8-flash-next-iq3s/heliotrope"],
+    },
+    "astral": {
+        "title": "The Astral set",
+        "date": "2026-10-21",
+        "plan": "PLAN-opus-5.5-2026-10-21-astral.md + astral/astro.lua",
+        "note": "Opus also wrote the shared astronomy -- Meeus Sun, Moon, sidereal time, "
+                "precession and eclipses, JPL planet elements, about 260 stars, the Milky Way "
+                "and the Chaldean planetary hours -- checked against the eclipses of 2018-28 "
+                "and the 2020 and 2026 great conjunctions. Qwen drew all three faces from it "
+                "in one 57-minute run.",
+        "ids": ["qwen3.8-flash-next-iq3s/long-exposure",
+                "qwen3.8-flash-next-iq3s/saros",
+                "qwen3.8-flash-next-iq3s/ephemeris-loom"],
+    },
+}
+
+CREDIT = {"plan": "Claude Opus 5.5", "build": "Qwen3.8 Flash-Next IQ3_S"}
+
+# The co-authored dials' own first comment lines say nothing useful ("Conky
+# clock"), so their descriptions are written out here, taken from the clock
+# tree's README, which records what each face actually shows.
+BLURB = {
+    "qwen3.8-flash-next-iq3s/ventura-shield":
+        "A Hamilton Ventura with markers fanned out to the asymmetric dial edge.",
+    "qwen3.8-flash-next-iq3s/going-train":
+        "A skeleton: barrel, wheel train, stepping escape wheel, pallet fork and a 2.5 Hz "
+        "balance whose hairspring breathes.",
+    "qwen3.8-flash-next-iq3s/modulus":
+        "A 120-pin times table whose multiplier is the hour plus two, so the string figure "
+        "morphs through the day; the time is read from beads strung on the rim.",
+    "qwen3.8-flash-next-iq3s/intra-chrono":
+        "A Hamilton Intra-Matic–style panda chronograph: tachymeter flange, running seconds "
+        "at 9, a 30-minute counter at 3, and a 4 Hz sweep.",
+    "qwen3.8-flash-next-iq3s/flying-tourbillon":
+        "A black-and-gold skeleton whose escape wheel, pallet fork and 2.5 Hz balance ride a "
+        "cage at 6 that turns once a minute, with a blued pointer on the cage for the seconds.",
+    "qwen3.8-flash-next-iq3s/heliotrope":
+        "A 640-seed phyllotaxis head. The hands are beams of light that make the seeds glow, "
+        "and one of 60 petals unfurls each second.",
+    "qwen3.8-flash-next-iq3s/long-exposure":
+        "Sidereal time as a live long-exposure photograph facing north: star trails, a leaning "
+        "treeline, the smeared Milky Way, meteors from the real radiants, and an amber camera "
+        "stamp for the local sidereal time.",
+    "qwen3.8-flash-next-iq3s/saros":
+        "Eclipse time on a bronze Antikythera-style spiral of 223 lunations holding every "
+        "eclipse of 2018–2036 as an inlay, with a gilt dragon ring for the Moon's nodes.",
+    "qwen3.8-flash-next-iq3s/ephemeris-loom":
+        "Planetary time as a horoscope wheel with the Ascendant held at 9 o'clock: a year of "
+        "each body's path woven to a bead on the now ring, retrograde runs dashed.",
+}
+
+
+def credit_of(dial_id: str):
+    """Which co-authored set a dial belongs to, or None."""
+    for key, s in PLANERS.items():
+        if dial_id in s["ids"]:
+            return key, s
+    return None, None
+
+
+def credit_line(dial_id: str) -> str:
+    key, _ = credit_of(dial_id)
+    if not key:
+        return ""
+    return (f"<b>{CREDIT['plan']}</b> plan · <b>{CREDIT['build']}</b> code")
+
+
+def credit_plain(dial_id: str) -> str:
+    key, _ = credit_of(dial_id)
+    return "" if not key else f"{CREDIT['plan']} plan, {CREDIT['build']} code"
 
 
 def clean_blurb(blurb: str, name: str, dial_id: str) -> str:
@@ -75,44 +173,84 @@ def main() -> None:
         r["file"] = Path(r["file"]).name
         r["model"] = model_of(r["id"])
         r["slug"] = slug_of(r["id"])
-        r["blurb"] = clean_blurb(r.get("blurb", ""), r["name"], r["id"])
+        r["blurb"] = BLURB.get(r["id"]) or clean_blurb(r.get("blurb", ""), r["name"], r["id"])
 
     groups: "OrderedDict[str, list]" = OrderedDict()
+    shared: "OrderedDict[str, list]" = OrderedDict()
     for r in sorted(rows, key=lambda r: (r["model"], r["id"])):
-        groups.setdefault(r["model"], []).append(r)
+        key, _ = credit_of(r["id"])
+        if key:
+            shared.setdefault(key, []).append(r)
+        else:
+            groups.setdefault(r["model"], []).append(r)
     # The dial whose author is unknown belongs at the end, not among the models.
     if "unknown" in groups:
         groups.move_to_end("unknown")
 
     n_dials = len(rows)
     n_models = len([m for m in groups if m != "unknown"])
+    n_shared = sum(len(v) for v in shared.values())
 
-    cards = []
-    for model, items in groups.items():
-        head = (
-            f'<h2 class="model" id="m-{html.escape(model)}">'
-            f'<span class="model-name">{html.escape(model)}</span>'
-            f'<span class="model-n">{len(items)}</span></h2>'
-        )
-        tiles = []
-        for r in items:
-            cap = html.escape(r["name"])
-            blurb = (f'<p class="blurb">{html.escape(r["blurb"])}</p>'
-                     if r["blurb"] else "")
-            text = html.escape(f"{r['name']} {model} {r['slug']} {r['blurb']}".lower())
-            tiles.append(
-                f"""      <figure class="card" tabindex="0"
+    def card(r, credit=False):
+        cap = html.escape(r["name"])
+        blurb = (f'<p class="blurb">{html.escape(r["blurb"])}</p>'
+                 if r["blurb"] else "")
+        model = r["model"]
+        note = credit_line(r["id"]) if credit else ""
+        badge = '<span class="badge">co-authored</span>' if credit else ""
+        plain = credit_plain(r["id"])
+        text = html.escape(f"{r['name']} {model} {r['slug']} {r['blurb']} {plain}".lower())
+        return f"""      <figure class="card" tabindex="0"
           data-img="assets/img/{html.escape(r['file'])}"
           data-name="{cap}" data-model="{html.escape(model)}"
-          data-text="{text}">
-        <div class="matte"><img src="assets/img/{html.escape(r['file'])}"
+          data-credit="{html.escape(plain)}" data-text="{text}">
+        <div class="matte">{badge}<img src="assets/img/{html.escape(r['file'])}"
              alt="{cap}, an analogue clock face" loading="lazy" width="640" height="640"></div>
         <figcaption>
           <span class="name">{cap}</span>
           {blurb}
+          {'<span class="credit">' + note + '</span>' if note else ''}
           <span class="slug">{html.escape(r['slug'])}</span>
         </figcaption>
-      </figure>""")
+      </figure>"""
+
+    cards = []
+
+    # Co-authored first: two names on the work, so it gets its own section.
+    if shared:
+        blocks = []
+        for key, s in PLANERS.items():
+            items = shared.get(key) or []
+            if not items:
+                continue
+            blocks.append(
+                '    <div class="setwrap">\n'
+                f'      <h3 class="set"><span>{html.escape(s["title"])}</span>'
+                f'<em>{html.escape(s["date"])}</em>'
+                f'<code>{html.escape(s["plan"])}</code></h3>\n'
+                f'      <p class="setnote">{html.escape(s["note"])}</p>\n'
+                '      <div class="grid">\n'
+                + "\n".join(card(r, credit=True) for r in items) +
+                "\n      </div>\n    </div>")
+        cards.append(
+            f'  <section class="group shared" data-model="co-authored">\n'
+            f'    <h2 class="model"><span class="model-name">'
+            f'{html.escape(CREDIT["plan"])} \u00d7 {html.escape(CREDIT["build"])}</span>'
+            f'<span class="model-n">{n_shared} co-authored</span></h2>\n'
+            + "\n".join(blocks) + "\n  </section>")
+
+    for model, items in groups.items():
+        extra = ""
+        n_shared_in = sum(1 for v in shared.values() for r in v if r["model"] == model)
+        if n_shared_in:
+            extra = (f'<span class="model-more">+{n_shared_in} co-authored '
+                     f'listed above</span>')
+        head = (
+            f'<h2 class="model" id="m-{html.escape(model)}">'
+            f'<span class="model-name">{html.escape(model)}</span>'
+            f'{extra}<span class="model-n">{len(items)}</span></h2>'
+        )
+        tiles = [card(r) for r in items]
         cards.append(f'  <section class="group" data-model="{html.escape(model)}">\n'
                      f'    {head}\n    <div class="grid">\n' + "\n".join(tiles) +
                      "\n    </div>\n  </section>")
@@ -120,8 +258,10 @@ def main() -> None:
     page = TEMPLATE.replace("<!--CARDS-->", "\n".join(cards))
     page = page.replace("<!--N-->", str(n_dials))
     page = page.replace("<!--MODELS-->", str(n_models))
+    page = page.replace("<!--SHARED-->", str(n_shared))
     OUT.write_text(page)
-    print(f"{OUT}: {n_dials} dials in {len(groups)} groups")
+    print(f"{OUT}: {n_dials} dials in {len(groups)} groups"
+          f" + {n_shared} co-authored in {len(shared)} sets")
 
 
 TEMPLATE = r"""<!doctype html>
@@ -184,6 +324,33 @@ TEMPLATE = r"""<!doctype html>
   .name{display:block;font-family:var(--serif);font-size:16px}
   .blurb{margin:3px 0 0;color:var(--muted);font-size:13px;line-height:1.4}
   .slug{display:block;margin-top:7px;color:#6b747d;font-family:var(--mono);font-size:11px}
+  .credit{display:block;margin-top:7px;font-size:12px;color:#a98d55}
+  .credit b{color:#c8a24a;font-weight:600}
+  .matte{position:relative}
+  .badge{position:absolute;top:8px;left:8px;z-index:2;font-size:10px;letter-spacing:.1em;
+         text-transform:uppercase;color:#e6d3a8;background:rgba(20,24,29,.72);
+         border:1px solid #4a4132;border-radius:999px;padding:3px 8px}
+  .set{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:26px 0 4px;
+       font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--ink)}
+  .setwrap:first-of-type .set{margin-top:6px}
+  .set em{font-style:normal;color:var(--muted);font-size:12px}
+  .set code{font-family:var(--mono);font-size:11px;color:#7f8891}
+  .setnote{margin:0 0 14px;color:var(--muted);font-size:13px;max-width:88ch}
+  .model-more{color:#6b747d;font-size:11px;letter-spacing:.06em;text-transform:none}
+  .skill{margin:34px 0 6px;border:1px solid var(--line);border-left:2px solid var(--accent);
+         border-radius:12px;background:var(--card);padding:20px 22px}
+  .skill h2{margin:0 0 8px;font-family:var(--serif);font-size:19px;font-weight:600}
+  .skill h2 code{font-family:var(--mono);color:var(--accent);font-size:17px}
+  .skill p{margin:0 0 10px;color:var(--muted);max-width:88ch}
+  .skill p b,.skill p strong{color:var(--ink)}
+  .brief{margin:12px 0;padding:14px 16px;border:1px solid var(--line);border-radius:9px;
+         background:#11151a;font-size:13.5px;color:#b9c0c8}
+  .brief li{margin:4px 0}
+  .brief .quote{margin:0;color:var(--ink)}
+  .brief ul{margin:12px 0 0;padding-left:20px}
+  .skill .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .skill .tags span{font-family:var(--mono);font-size:11px;color:#8d949c;
+                    border:1px solid var(--line);border-radius:999px;padding:3px 9px}
   .hidden{display:none}
   .empty{color:var(--muted);padding:40px 0}
   footer{max-width:1320px;margin:0 auto;padding:24px;border-top:1px solid var(--line);
@@ -214,13 +381,44 @@ TEMPLATE = r"""<!doctype html>
 </header>
 
 <div class="bar"><div class="bar-in">
-  <span class="stats"><b><!--N--></b> dials · <b><!--MODELS--></b> makers</span>
+  <span class="stats"><b><!--N--></b> dials · <b><!--MODELS--></b> makers · <b><!--SHARED--></b> co-authored</span>
   <input id="q" type="search" placeholder="Filter by name, maker, or what it does…" aria-label="Filter dials">
   <button id="matte" title="Switch the tile behind each dial">Light matte</button>
   <span class="stats" id="shown"></span>
 </div></div>
 
 <main>
+  <section class="skill">
+    <h2>Where they come from: the <code>/clock</code> skill</h2>
+    <p>Most of these dials were made by a <b>pi skill</b> invoked as <code>/clock</code>. A skill
+    is a fixed prompt the harness hands to whatever model is being used, so every maker in this
+    gallery started from the <em>same</em> brief and the same ground rules — which is what makes
+    the sets comparable. The brief is short, and the last line is the point:</p>
+    <div class="brief">
+      <p class="quote">“This is an evaluation. I would like you to create
+      3 analog clocks using Lua and displayed by Conky on my desktop. Place them at the top of the
+      lower monitor. One will resemble a Hamilton watch, one will resemble a skeleton watch, and one
+      will be unique and a truly one-of-a-kind design. There are already several on my computer
+      working, but <b>DO NOT look at them</b>. This is an evaluation, and I want to see what you can
+      do on your own. You are able to ask questions.”</p>
+      <ul>
+        <li>three clocks: one Hamilton-style field dial, one openworked skeleton, one original design</li>
+        <li>every file for a clock stays in <code>~/.config/conky/clocks/&lt;model-name&gt;/</code></li>
+        <li>no inspecting, copying, sourcing or modifying any clock already on the machine — each
+            design starts from first principles</li>
+      </ul>
+    </div>
+    <p>That is why the same three subjects keep reappearing under different makers: a field watch, a
+    skeleton, and something with no hands at all. A companion skill, <code>/run-clock
+    &lt;model&gt;</code>, runs that evaluation against a local model, supervises it — unsticking
+    hangs, breaking loops, nudging with what is on screen — and then adds the finished clocks to
+    the gallery.</p>
+    <p>The <b><!--SHARED--></b> co-authored dials above are deliberately <em>not</em> a
+    <code>/clock</code> evaluation: there one model wrote the design and the plan file and the other
+    wrote every line of code from it.</p>
+    <div class="tags"><span>/clock</span><span>/run-clock &lt;model&gt;</span>
+      <span>Lua + cairo</span><span>conky 1.24</span></div>
+  </section>
 <!--CARDS-->
 <p class="empty hidden" id="none">Nothing matches that.</p>
 </main>
@@ -255,6 +453,9 @@ function apply(){
   for(const g of document.querySelectorAll('.group')){
     g.classList.toggle('hidden',!g.querySelector('.card:not(.hidden)'));
   }
+  for(const w of document.querySelectorAll('.setwrap')){
+    w.classList.toggle('hidden',!w.querySelector('.card:not(.hidden)'));
+  }
   none.classList.toggle('hidden',n>0);
   shown.textContent=w.length?`${n} shown`:'';
 }
@@ -267,7 +468,8 @@ function view(k){
   const c=order[i];
   big.src=c.dataset.img;
   big.alt=c.dataset.name+', enlarged';
-  cap.innerHTML=`<b>${c.dataset.name}</b>${c.dataset.model} · ${i+1} of ${order.length}`;
+  const who=c.dataset.credit||c.dataset.model;
+  cap.innerHTML=`<b>${c.dataset.name}</b>${who} · ${i+1} of ${order.length}`;
 }
 function open(c){
   order=cards.filter(x=>!x.classList.contains('hidden'));
