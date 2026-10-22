@@ -1,0 +1,1237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock Gallery — 79 analogue dials drawn in Lua/Cairo</title>
+<meta name="description" content="79 analogue clock faces, each one a Lua/Cairo program
+  that Conky runs on a Linux desktop. Rendered offscreen at their desktop size — screenshots, not source.">
+<meta property="og:title" content="Clock Gallery">
+<meta property="og:description" content="79 analogue dials drawn in Lua/Cairo, rendered from the code that runs them.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23c8a24a' stroke-width='2'/%3E%3Cpath d='M16 8v8l6 3' fill='none' stroke='%23e8e4dc' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0d1013; --ink:#e9e6df; --muted:#9aa3ad; --line:#252b32;
+    --card:#161a1f; --matte:#242a31; --accent:#c8a24a;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(1200px 600px at 50% -10%,#1a2027 0%,transparent 60%)}
+  header{position:relative;padding:56px 24px 8px;max-width:1320px;margin:0 auto}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,52px);
+     margin:0 0 10px;letter-spacing:.01em}
+  .lede{max-width:74ch;color:var(--muted);margin:0 0 22px;font-size:16px}
+  .lede b{color:var(--ink);font-weight:600}
+  .bar{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+       padding:12px 24px;margin:22px 0 0;background:rgba(13,16,19,.86);
+       backdrop-filter:blur(10px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .bar-in{max-width:1320px;margin:0 auto;width:100%;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .stats{color:var(--muted);font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+  .stats b{color:var(--accent);font-weight:600}
+  #q{flex:1 1 240px;min-width:200px;background:#11151a;border:1px solid var(--line);
+     border-radius:10px;color:var(--ink);padding:10px 14px;font:inherit;outline:none}
+  #q:focus{border-color:#3d4650}
+  button{background:#11151a;border:1px solid var(--line);color:var(--ink);border-radius:10px;
+         padding:10px 14px;font:inherit;cursor:pointer}
+  button:hover{border-color:#3d4650}
+  main{max-width:1320px;margin:0 auto;padding:8px 24px 64px}
+  .group{margin-top:38px}
+  .model{display:flex;align-items:baseline;gap:12px;margin:0 0 16px;font-weight:600;
+         font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .model::after{content:"";flex:1;height:1px;background:var(--line)}
+  .model-n{color:var(--muted);letter-spacing:.06em;font-size:12px}
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+  .card{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:12px;cursor:zoom-in;transition:border-color .15s,transform .15s}
+  .card:hover,.card:focus-visible{border-color:#3a434d;transform:translateY(-2px);outline:none}
+  .matte{aspect-ratio:1;border-radius:9px;overflow:hidden;display:grid;place-items:center;
+         background:radial-gradient(circle at 50% 45%,#2c333b 0%,#1d2228 72%)}
+  body.light .matte{background:radial-gradient(circle at 50% 45%,#d8d5cf 0%,#b9b6b0 72%)}
+  .matte img{width:100%;height:100%;object-fit:contain;display:block}
+  figcaption{padding-top:10px}
+  .name{display:block;font-family:var(--serif);font-size:16px}
+  .blurb{margin:3px 0 0;color:var(--muted);font-size:13px;line-height:1.4}
+  .slug{display:block;margin-top:7px;color:#6b747d;font-family:var(--mono);font-size:11px}
+  .hidden{display:none}
+  .empty{color:var(--muted);padding:40px 0}
+  footer{max-width:1320px;margin:0 auto;padding:24px;border-top:1px solid var(--line);
+         color:var(--muted);font-size:13px;display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
+  footer code{font-family:var(--mono);color:#8d949c}
+  #box{position:fixed;inset:0;z-index:20;display:none;place-items:center;
+       background:rgba(6,8,10,.92);padding:24px}
+  #box.on{display:grid}
+  #box img{max-width:min(88vw,86vh);max-height:86vh;border-radius:12px;
+           background:radial-gradient(circle at 50% 45%,#2c333b,#1d2228 72%)}
+  #cap{margin-top:14px;text-align:center;color:var(--muted);font-size:14px}
+  #cap b{display:block;font-family:var(--serif);font-size:19px;color:var(--ink);margin-bottom:4px}
+  .nav{position:fixed;top:50%;transform:translateY(-50%);background:rgba(20,24,29,.7);
+       border:1px solid var(--line);border-radius:999px;width:44px;height:44px;font-size:20px;
+       display:grid;place-items:center;padding:0;color:var(--ink)}
+  #prev{left:18px} #next{right:18px}
+  #close{position:fixed;top:18px;right:18px;width:44px;height:44px;padding:0;border-radius:999px}
+  @media (max-width:560px){.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Clock Gallery</h1>
+  <p class="lede"><b>79 analogue dials</b>, every one of them a Lua/Cairo program that Conky
+  draws on a Linux desktop — hands, gear trains, moon phases, orbits and interference fringes, all
+  painted a frame at a time. What is here are the <b>screenshots</b>, not the source: each image is
+  that clock's own drawing code run once into an offscreen surface, at the size it is drawn on screen.</p>
+</header>
+
+<div class="bar"><div class="bar-in">
+  <span class="stats"><b>79</b> dials · <b>22</b> makers</span>
+  <input id="q" type="search" placeholder="Filter by name, maker, or what it does…" aria-label="Filter dials">
+  <button id="matte" title="Switch the tile behind each dial">Light matte</button>
+  <span class="stats" id="shown"></span>
+</div></div>
+
+<main>
+  <section class="group" data-model="claude-haiku-5.5">
+    <h2 class="model" id="m-claude-haiku-5.5"><span class="model-name">claude-haiku-5.5</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-haiku-5.5__hamilton.png"
+          data-name="Hamilton" data-model="claude-haiku-5.5"
+          data-text="hamilton claude-haiku-5.5 hamilton style field watch: cream railroad…">
+        <div class="matte"><img src="assets/img/claude-haiku-5.5__hamilton.png"
+             alt="Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton</span>
+          <p class="blurb">Style field watch: cream railroad…</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-haiku-5.5__orbital.png"
+          data-name="Orbital" data-model="claude-haiku-5.5"
+          data-text="orbital claude-haiku-5.5 orbital a clock with no hands. the hour, minute and…">
+        <div class="matte"><img src="assets/img/claude-haiku-5.5__orbital.png"
+             alt="Orbital, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Orbital</span>
+          <p class="blurb">A clock with no hands. The hour, minute and…</p>
+          <span class="slug">orbital</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-haiku-5.5__skeleton.png"
+          data-name="Skeleton" data-model="claude-haiku-5.5"
+          data-text="skeleton claude-haiku-5.5 skeleton skeleton watch: the movement is the dial.…">
+        <div class="matte"><img src="assets/img/claude-haiku-5.5__skeleton.png"
+             alt="Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton</span>
+          <p class="blurb">Skeleton watch: the movement is the dial.…</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="claude-opus-4.8">
+    <h2 class="model" id="m-claude-opus-4.8"><span class="model-name">claude-opus-4.8</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-4.8__hamilton-khaki.png"
+          data-name="Hamilton Khaki" data-model="claude-opus-4.8"
+          data-text="hamilton khaki claude-opus-4.8 hamilton-khaki hamilton khaki field — analog clock for…">
+        <div class="matte"><img src="assets/img/claude-opus-4.8__hamilton-khaki.png"
+             alt="Hamilton Khaki, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton Khaki</span>
+          <p class="blurb">Hamilton Khaki Field — analog clock for…</p>
+          <span class="slug">hamilton-khaki</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-4.8__nebula-orbit.png"
+          data-name="Nebula Orbit" data-model="claude-opus-4.8"
+          data-text="nebula orbit claude-opus-4.8 nebula-orbit a one-of-a-kind analog…">
+        <div class="matte"><img src="assets/img/claude-opus-4.8__nebula-orbit.png"
+             alt="Nebula Orbit, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Nebula Orbit</span>
+          <p class="blurb">A one-of-a-kind analog…</p>
+          <span class="slug">nebula-orbit</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-4.8__skeleton-openwork.png"
+          data-name="Skeleton Openwork" data-model="claude-opus-4.8"
+          data-text="skeleton openwork claude-opus-4.8 skeleton-openwork skeleton (openwork) — analog clock for…">
+        <div class="matte"><img src="assets/img/claude-opus-4.8__skeleton-openwork.png"
+             alt="Skeleton Openwork, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton Openwork</span>
+          <p class="blurb">Skeleton (openwork) — analog clock for…</p>
+          <span class="slug">skeleton-openwork</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="claude-opus-5">
+    <h2 class="model" id="m-claude-opus-5"><span class="model-name">claude-opus-5</span><span class="model-n">6</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5__chronoforge-gnomon.png"
+          data-name="Gnomon" data-model="claude-opus-5"
+          data-text="gnomon claude-opus-5 chronoforge-gnomon time told by three cast shadows">
+        <div class="matte"><img src="assets/img/claude-opus-5__chronoforge-gnomon.png"
+             alt="Gnomon, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Gnomon</span>
+          <p class="blurb">Time told by three cast shadows</p>
+          <span class="slug">chronoforge-gnomon</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5__chronoforge-hamilton.png"
+          data-name="Khaki Field" data-model="claude-opus-5"
+          data-text="khaki field claude-opus-5 chronoforge-hamilton hamilton khaki field, 21600 vph beat">
+        <div class="matte"><img src="assets/img/claude-opus-5__chronoforge-hamilton.png"
+             alt="Khaki Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Khaki Field</span>
+          <p class="blurb">Hamilton Khaki Field, 21600 vph beat</p>
+          <span class="slug">chronoforge-hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5__chronoforge-skeleton.png"
+          data-name="Openworked" data-model="claude-opus-5"
+          data-text="openworked claude-opus-5 chronoforge-skeleton live going train and a 3 hz balance">
+        <div class="matte"><img src="assets/img/claude-opus-5__chronoforge-skeleton.png"
+             alt="Openworked, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Openworked</span>
+          <p class="blurb">Live going train and a 3 Hz balance</p>
+          <span class="slug">chronoforge-skeleton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5__physica-filings.png"
+          data-name="Filings" data-model="claude-opus-5"
+          data-text="filings claude-opus-5 physica-filings iron filings over hidden magnet hands">
+        <div class="matte"><img src="assets/img/claude-opus-5__physica-filings.png"
+             alt="Filings, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Filings</span>
+          <p class="blurb">Iron filings over hidden magnet hands</p>
+          <span class="slug">physica-filings</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5__physica-loupe.png"
+          data-name="Loupe" data-model="claude-opus-5"
+          data-text="loupe claude-opus-5 physica-loupe a ray-traced lens reads 720 printed minutes">
+        <div class="matte"><img src="assets/img/claude-opus-5__physica-loupe.png"
+             alt="Loupe, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Loupe</span>
+          <p class="blurb">A ray-traced lens reads 720 printed minutes</p>
+          <span class="slug">physica-loupe</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5__physica-moire.png"
+          data-name="Moiré" data-model="claude-opus-5"
+          data-text="moiré claude-opus-5 physica-moire hands made of interference fringes">
+        <div class="matte"><img src="assets/img/claude-opus-5__physica-moire.png"
+             alt="Moiré, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Moiré</span>
+          <p class="blurb">Hands made of interference fringes</p>
+          <span class="slug">physica-moire</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="claude-opus-5.5">
+    <h2 class="model" id="m-claude-opus-5.5"><span class="model-name">claude-opus-5.5</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5.5__epicycle.png"
+          data-name="Epicycle" data-model="claude-opus-5.5"
+          data-text="epicycle claude-opus-5.5 epicycle chained arms ink the last hour&#x27;s rose">
+        <div class="matte"><img src="assets/img/claude-opus-5.5__epicycle.png"
+             alt="Epicycle, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Epicycle</span>
+          <p class="blurb">Chained arms ink the last hour&#x27;s rose</p>
+          <span class="slug">epicycle</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5.5__hamilton.png"
+          data-name="Opus Field" data-model="claude-opus-5.5"
+          data-text="opus field claude-opus-5.5 hamilton khaki-style field dial, 6 ticks a second">
+        <div class="matte"><img src="assets/img/claude-opus-5.5__hamilton.png"
+             alt="Opus Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Opus Field</span>
+          <p class="blurb">Khaki-style field dial, 6 ticks a second</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-opus-5.5__skeleton.png"
+          data-name="Opus Openwork" data-model="claude-opus-5.5"
+          data-text="opus openwork claude-opus-5.5 skeleton a running 18,000 bph going train">
+        <div class="matte"><img src="assets/img/claude-opus-5.5__skeleton.png"
+             alt="Opus Openwork, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Opus Openwork</span>
+          <p class="blurb">A running 18,000 bph going train</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="claude-sonnet-5">
+    <h2 class="model" id="m-claude-sonnet-5"><span class="model-name">claude-sonnet-5</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-sonnet-5__clockworks-meridian.png"
+          data-name="Meridian" data-model="claude-sonnet-5"
+          data-text="meridian claude-sonnet-5 clockworks-meridian day-night sky, comet minute, orbiting hour">
+        <div class="matte"><img src="assets/img/claude-sonnet-5__clockworks-meridian.png"
+             alt="Meridian, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Meridian</span>
+          <p class="blurb">Day-night sky, comet minute, orbiting hour</p>
+          <span class="slug">clockworks-meridian</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-sonnet-5__clockworks-railway.png"
+          data-name="Railway" data-model="claude-sonnet-5"
+          data-text="railway claude-sonnet-5 clockworks-railway railroad minute track, dauphine hands, date">
+        <div class="matte"><img src="assets/img/claude-sonnet-5__clockworks-railway.png"
+             alt="Railway, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Railway</span>
+          <p class="blurb">Railroad minute track, dauphine hands, date</p>
+          <span class="slug">clockworks-railway</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-sonnet-5__clockworks-skeleton.png"
+          data-name="Clockworks Skeleton" data-model="claude-sonnet-5"
+          data-text="clockworks skeleton claude-sonnet-5 clockworks-skeleton open bezel, bridges and a wobbling balance">
+        <div class="matte"><img src="assets/img/claude-sonnet-5__clockworks-skeleton.png"
+             alt="Clockworks Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Clockworks Skeleton</span>
+          <p class="blurb">Open bezel, bridges and a wobbling balance</p>
+          <span class="slug">clockworks-skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="claude-sonnet-5.5">
+    <h2 class="model" id="m-claude-sonnet-5.5"><span class="model-name">claude-sonnet-5.5</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-sonnet-5.5__hamilton.png"
+          data-name="Hamilton" data-model="claude-sonnet-5.5"
+          data-text="hamilton claude-sonnet-5.5 hamilton field watch in the style of a…">
+        <div class="matte"><img src="assets/img/claude-sonnet-5.5__hamilton.png"
+             alt="Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton</span>
+          <p class="blurb">Field watch in the style of a…</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-sonnet-5.5__orrery.png"
+          data-name="Orrery" data-model="claude-sonnet-5.5"
+          data-text="orrery claude-sonnet-5.5 orrery &quot;orrery&quot;. no hands. a ringed amber…">
+        <div class="matte"><img src="assets/img/claude-sonnet-5.5__orrery.png"
+             alt="Orrery, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Orrery</span>
+          <p class="blurb">&quot;Orrery&quot;. No hands. A ringed amber…</p>
+          <span class="slug">orrery</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/claude-sonnet-5.5__skeleton.png"
+          data-name="Skeleton" data-model="claude-sonnet-5.5"
+          data-text="skeleton claude-sonnet-5.5 skeleton skeleton watch. the movement is…">
+        <div class="matte"><img src="assets/img/claude-sonnet-5.5__skeleton.png"
+             alt="Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton</span>
+          <p class="blurb">Skeleton watch. The movement is…</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="devstral-small-2-24b">
+    <h2 class="model" id="m-devstral-small-2-24b"><span class="model-name">devstral-small-2-24b</span><span class="model-n">1</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/devstral-small-2-24b.png"
+          data-name="Devstral Small 2 24B" data-model="devstral-small-2-24b"
+          data-text="devstral small 2 24b devstral-small-2-24b devstral-small-2-24b hamilton-style analog clock for conky">
+        <div class="matte"><img src="assets/img/devstral-small-2-24b.png"
+             alt="Devstral Small 2 24B, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Devstral Small 2 24B</span>
+          <p class="blurb">Hamilton-style analog clock for Conky</p>
+          <span class="slug">devstral-small-2-24b</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="glm-4.7-flash">
+    <h2 class="model" id="m-glm-4.7-flash"><span class="model-name">glm-4.7-flash</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/glm-4.7-flash__hamilton.png"
+          data-name="Hamilton" data-model="glm-4.7-flash"
+          data-text="hamilton glm-4.7-flash hamilton elegant…">
+        <div class="matte"><img src="assets/img/glm-4.7-flash__hamilton.png"
+             alt="Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton</span>
+          <p class="blurb">Elegant…</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/glm-4.7-flash__skeleton.png"
+          data-name="Skeleton" data-model="glm-4.7-flash"
+          data-text="skeleton glm-4.7-flash skeleton mechanical gears…">
+        <div class="matte"><img src="assets/img/glm-4.7-flash__skeleton.png"
+             alt="Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton</span>
+          <p class="blurb">Mechanical gears…</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/glm-4.7-flash__unique.png"
+          data-name="Unique" data-model="glm-4.7-flash"
+          data-text="unique glm-4.7-flash unique glm-4.7-flash cosmic — celestial orbital…">
+        <div class="matte"><img src="assets/img/glm-4.7-flash__unique.png"
+             alt="Unique, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Unique</span>
+          <p class="blurb">Glm-4.7-flash cosmic — celestial orbital…</p>
+          <span class="slug">unique</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-5.6-luna">
+    <h2 class="model" id="m-gpt-5.6-luna"><span class="model-name">gpt-5.6-luna</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-luna__hamilton-atelier.png"
+          data-name="Hamilton Atelier" data-model="gpt-5.6-luna"
+          data-text="hamilton atelier gpt-5.6-luna hamilton-atelier a warm, finely finished…">
+        <div class="matte"><img src="assets/img/gpt-5.6-luna__hamilton-atelier.png"
+             alt="Hamilton Atelier, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton Atelier</span>
+          <p class="blurb">A warm, finely finished…</p>
+          <span class="slug">hamilton-atelier</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-luna__orbital-tide.png"
+          data-name="Orbital Tide" data-model="gpt-5.6-luna"
+          data-text="orbital tide gpt-5.6-luna orbital-tide time as a small solar system,…">
+        <div class="matte"><img src="assets/img/gpt-5.6-luna__orbital-tide.png"
+             alt="Orbital Tide, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Orbital Tide</span>
+          <p class="blurb">Time as a small solar system,…</p>
+          <span class="slug">orbital-tide</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-luna__skeleton-kinetic.png"
+          data-name="Skeleton Kinetic" data-model="gpt-5.6-luna"
+          data-text="skeleton kinetic gpt-5.6-luna skeleton-kinetic an open-work movement…">
+        <div class="matte"><img src="assets/img/gpt-5.6-luna__skeleton-kinetic.png"
+             alt="Skeleton Kinetic, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton Kinetic</span>
+          <p class="blurb">An open-work movement…</p>
+          <span class="slug">skeleton-kinetic</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-5.6-sol">
+    <h2 class="model" id="m-gpt-5.6-sol"><span class="model-name">gpt-5.6-sol</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-sol__chronoweave.png"
+          data-name="Chronoweave" data-model="gpt-5.6-sol"
+          data-text="chronoweave gpt-5.6-sol chronoweave an original analog clock imagined as time…">
+        <div class="matte"><img src="assets/img/gpt-5.6-sol__chronoweave.png"
+             alt="Chronoweave, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Chronoweave</span>
+          <p class="blurb">An original analog clock imagined as time…</p>
+          <span class="slug">chronoweave</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-sol__khaki-field.png"
+          data-name="Khaki Field" data-model="gpt-5.6-sol"
+          data-text="khaki field gpt-5.6-sol khaki-field an original field-watch dial…">
+        <div class="matte"><img src="assets/img/gpt-5.6-sol__khaki-field.png"
+             alt="Khaki Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Khaki Field</span>
+          <p class="blurb">An original field-watch dial…</p>
+          <span class="slug">khaki-field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-sol__orrery-skeleton.png"
+          data-name="Orrery Skeleton" data-model="gpt-5.6-sol"
+          data-text="orrery skeleton gpt-5.6-sol orrery-skeleton an original open-worked…">
+        <div class="matte"><img src="assets/img/gpt-5.6-sol__orrery-skeleton.png"
+             alt="Orrery Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Orrery Skeleton</span>
+          <p class="blurb">An original open-worked…</p>
+          <span class="slug">orrery-skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-5.6-terra">
+    <h2 class="model" id="m-gpt-5.6-terra"><span class="model-name">gpt-5.6-terra</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-terra__asterism-orbit.png"
+          data-name="Asterism Orbit" data-model="gpt-5.6-terra"
+          data-text="asterism orbit gpt-5.6-terra asterism-orbit ">
+        <div class="matte"><img src="assets/img/gpt-5.6-terra__asterism-orbit.png"
+             alt="Asterism Orbit, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Asterism Orbit</span>
+          
+          <span class="slug">asterism-orbit</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-terra__heritage-field.png"
+          data-name="Heritage Field" data-model="gpt-5.6-terra"
+          data-text="heritage field gpt-5.6-terra heritage-field ">
+        <div class="matte"><img src="assets/img/gpt-5.6-terra__heritage-field.png"
+             alt="Heritage Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Heritage Field</span>
+          
+          <span class="slug">heritage-field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-5.6-terra__openwork-calibre.png"
+          data-name="Openwork Calibre" data-model="gpt-5.6-terra"
+          data-text="openwork calibre gpt-5.6-terra openwork-calibre ">
+        <div class="matte"><img src="assets/img/gpt-5.6-terra__openwork-calibre.png"
+             alt="Openwork Calibre, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Openwork Calibre</span>
+          
+          <span class="slug">openwork-calibre</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-6-astra">
+    <h2 class="model" id="m-gpt-6-astra"><span class="model-name">gpt-6-astra</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-astra__atelier-field.png"
+          data-name="Atelier Field" data-model="gpt-6-astra"
+          data-text="atelier field gpt-6-astra atelier-field a restrained 24-hour field dial">
+        <div class="matte"><img src="assets/img/gpt-6-astra__atelier-field.png"
+             alt="Atelier Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Atelier Field</span>
+          <p class="blurb">A restrained 24-hour field dial</p>
+          <span class="slug">atelier-field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-astra__atelier-openwork.png"
+          data-name="Atelier Openwork" data-model="gpt-6-astra"
+          data-text="atelier openwork gpt-6-astra atelier-openwork exposed mechanics in blued steel">
+        <div class="matte"><img src="assets/img/gpt-6-astra__atelier-openwork.png"
+             alt="Atelier Openwork, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Atelier Openwork</span>
+          <p class="blurb">Exposed mechanics in blued steel</p>
+          <span class="slug">atelier-openwork</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-astra__atelier-parallax.png"
+          data-name="Atelier Parallax" data-model="gpt-6-astra"
+          data-text="atelier parallax gpt-6-astra atelier-parallax an original study in orbital time">
+        <div class="matte"><img src="assets/img/gpt-6-astra__atelier-parallax.png"
+             alt="Atelier Parallax, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Atelier Parallax</span>
+          <p class="blurb">An original study in orbital time</p>
+          <span class="slug">atelier-parallax</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-6-luna">
+    <h2 class="model" id="m-gpt-6-luna"><span class="model-name">gpt-6-luna</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-luna__field.png"
+          data-name="Luna Six Field" data-model="gpt-6-luna"
+          data-text="luna six field gpt-6-luna field gilt bezel, 24-hour field dial">
+        <div class="matte"><img src="assets/img/gpt-6-luna__field.png"
+             alt="Luna Six Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Luna Six Field</span>
+          <p class="blurb">Gilt bezel, 24-hour field dial</p>
+          <span class="slug">field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-luna__noctiluca.png"
+          data-name="Noctiluca" data-model="gpt-6-luna"
+          data-text="noctiluca gpt-6-luna noctiluca violet lunar astrolabe">
+        <div class="matte"><img src="assets/img/gpt-6-luna__noctiluca.png"
+             alt="Noctiluca, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Noctiluca</span>
+          <p class="blurb">Violet lunar astrolabe</p>
+          <span class="slug">noctiluca</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-luna__openwork.png"
+          data-name="Luna Six Openwork" data-model="gpt-6-luna"
+          data-text="luna six openwork gpt-6-luna openwork steel bridges and movement arcs">
+        <div class="matte"><img src="assets/img/gpt-6-luna__openwork.png"
+             alt="Luna Six Openwork, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Luna Six Openwork</span>
+          <p class="blurb">Steel bridges and movement arcs</p>
+          <span class="slug">openwork</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-6-sol">
+    <h2 class="model" id="m-gpt-6-sol"><span class="model-name">gpt-6-sol</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-sol__field.png"
+          data-name="Northline Field" data-model="gpt-6-sol"
+          data-text="northline field gpt-6-sol field a classic 24-hour field watch">
+        <div class="matte"><img src="assets/img/gpt-6-sol__field.png"
+             alt="Northline Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Northline Field</span>
+          <p class="blurb">A classic 24-hour field watch</p>
+          <span class="slug">field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-sol__skeleton.png"
+          data-name="Atelier 02" data-model="gpt-6-sol"
+          data-text="atelier 02 gpt-6-sol skeleton an animated open-work movement">
+        <div class="matte"><img src="assets/img/gpt-6-sol__skeleton.png"
+             alt="Atelier 02, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Atelier 02</span>
+          <p class="blurb">An animated open-work movement</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6-sol__tidal.png"
+          data-name="Tidal Atlas" data-model="gpt-6-sol"
+          data-text="tidal atlas gpt-6-sol tidal celestial orbits and lunar phase">
+        <div class="matte"><img src="assets/img/gpt-6-sol__tidal.png"
+             alt="Tidal Atlas, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Tidal Atlas</span>
+          <p class="blurb">Celestial orbits and lunar phase</p>
+          <span class="slug">tidal</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="gpt-6.1-sol">
+    <h2 class="model" id="m-gpt-6.1-sol"><span class="model-name">gpt-6.1-sol</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6.1-sol__hamilton-field.png"
+          data-name="Hamilton Field" data-model="gpt-6.1-sol"
+          data-text="hamilton field gpt-6.1-sol hamilton-field original artwork for this evaluation; no…">
+        <div class="matte"><img src="assets/img/gpt-6.1-sol__hamilton-field.png"
+             alt="Hamilton Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton Field</span>
+          <p class="blurb">Original artwork for this evaluation; no…</p>
+          <span class="slug">hamilton-field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6.1-sol__lagrange.png"
+          data-name="Lagrange" data-model="gpt-6.1-sol"
+          data-text="lagrange gpt-6.1-sol lagrange original orbital instrument, designed for…">
+        <div class="matte"><img src="assets/img/gpt-6.1-sol__lagrange.png"
+             alt="Lagrange, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Lagrange</span>
+          <p class="blurb">Original orbital instrument, designed for…</p>
+          <span class="slug">lagrange</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/gpt-6.1-sol__skeleton-atelier.png"
+          data-name="Skeleton Atelier" data-model="gpt-6.1-sol"
+          data-text="skeleton atelier gpt-6.1-sol skeleton-atelier original open-work watch: procedural gears,…">
+        <div class="matte"><img src="assets/img/gpt-6.1-sol__skeleton-atelier.png"
+             alt="Skeleton Atelier, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton Atelier</span>
+          <p class="blurb">Original open-work watch: procedural gears,…</p>
+          <span class="slug">skeleton-atelier</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.6-27b-abliterated">
+    <h2 class="model" id="m-qwen3.6-27b-abliterated"><span class="model-name">qwen3.6-27b-abliterated</span><span class="model-n">6</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-27b-abliterated__2026-10-10__hamilton.png"
+          data-name="Hamilton" data-model="qwen3.6-27b-abliterated"
+          data-text="hamilton qwen3.6-27b-abliterated hamilton style analog clock — classic…">
+        <div class="matte"><img src="assets/img/qwen3.6-27b-abliterated__2026-10-10__hamilton.png"
+             alt="Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton</span>
+          <p class="blurb">Style analog clock — classic…</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-27b-abliterated__2026-10-10__orbital.png"
+          data-name="Orbital" data-model="qwen3.6-27b-abliterated"
+          data-text="orbital qwen3.6-27b-abliterated orbital orbital analog clock — unique celestial…">
+        <div class="matte"><img src="assets/img/qwen3.6-27b-abliterated__2026-10-10__orbital.png"
+             alt="Orbital, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Orbital</span>
+          <p class="blurb">Orbital analog clock — unique celestial…</p>
+          <span class="slug">orbital</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-27b-abliterated__2026-10-10__skeleton.png"
+          data-name="Skeleton" data-model="qwen3.6-27b-abliterated"
+          data-text="skeleton qwen3.6-27b-abliterated skeleton style analog clock — exposed…">
+        <div class="matte"><img src="assets/img/qwen3.6-27b-abliterated__2026-10-10__skeleton.png"
+             alt="Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton</span>
+          <p class="blurb">Style analog clock — exposed…</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-27b-abliterated__constellation.png"
+          data-name="Constellation" data-model="qwen3.6-27b-abliterated"
+          data-text="constellation qwen3.6-27b-abliterated constellation orbital timekeeping with celestial mechanics">
+        <div class="matte"><img src="assets/img/qwen3.6-27b-abliterated__constellation.png"
+             alt="Constellation, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Constellation</span>
+          <p class="blurb">Orbital timekeeping with celestial mechanics</p>
+          <span class="slug">constellation</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-27b-abliterated__hamilton.png"
+          data-name="Hamilton Field" data-model="qwen3.6-27b-abliterated"
+          data-text="hamilton field qwen3.6-27b-abliterated hamilton field-watch dial with military hour ring">
+        <div class="matte"><img src="assets/img/qwen3.6-27b-abliterated__hamilton.png"
+             alt="Hamilton Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton Field</span>
+          <p class="blurb">Field-watch dial with military hour ring</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-27b-abliterated__skeleton.png"
+          data-name="Skeleton Openwork" data-model="qwen3.6-27b-abliterated"
+          data-text="skeleton openwork qwen3.6-27b-abliterated skeleton visible gear train with oscillating balance">
+        <div class="matte"><img src="assets/img/qwen3.6-27b-abliterated__skeleton.png"
+             alt="Skeleton Openwork, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton Openwork</span>
+          <p class="blurb">Visible gear train with oscillating balance</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.6-35b-a3b">
+    <h2 class="model" id="m-qwen3.6-35b-a3b"><span class="model-name">qwen3.6-35b-a3b</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-35b-a3b__watch-flux.png"
+          data-name="Flux Watch" data-model="qwen3.6-35b-a3b"
+          data-text="flux watch qwen3.6-35b-a3b watch-flux deep-blue radar face with orbiting contacts">
+        <div class="matte"><img src="assets/img/qwen3.6-35b-a3b__watch-flux.png"
+             alt="Flux Watch, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Flux Watch</span>
+          <p class="blurb">Deep-blue radar face with orbiting contacts</p>
+          <span class="slug">watch-flux</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-35b-a3b__watch-hamilton.png"
+          data-name="Hamilton Watch" data-model="qwen3.6-35b-a3b"
+          data-text="hamilton watch qwen3.6-35b-a3b watch-hamilton field dial with a moon-phase aperture">
+        <div class="matte"><img src="assets/img/qwen3.6-35b-a3b__watch-hamilton.png"
+             alt="Hamilton Watch, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton Watch</span>
+          <p class="blurb">Field dial with a moon-phase aperture</p>
+          <span class="slug">watch-hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.6-35b-a3b__watch-skeleton.png"
+          data-name="Skeleton Watch" data-model="qwen3.6-35b-a3b"
+          data-text="skeleton watch qwen3.6-35b-a3b watch-skeleton smoked open dial over visible gearwork">
+        <div class="matte"><img src="assets/img/qwen3.6-35b-a3b__watch-skeleton.png"
+             alt="Skeleton Watch, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Skeleton Watch</span>
+          <p class="blurb">Smoked open dial over visible gearwork</p>
+          <span class="slug">watch-skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.8-27b-q4">
+    <h2 class="model" id="m-qwen3.8-27b-q4"><span class="model-name">qwen3.8-27b-q4</span><span class="model-n">1</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-27b-q4__hamilton.png"
+          data-name="Hamilton" data-model="qwen3.8-27b-q4"
+          data-text="hamilton qwen3.8-27b-q4 hamilton ">
+        <div class="matte"><img src="assets/img/qwen3.8-27b-q4__hamilton.png"
+             alt="Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton</span>
+          
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.8-27b-q4-128k">
+    <h2 class="model" id="m-qwen3.8-27b-q4-128k"><span class="model-name">qwen3.8-27b-q4-128k</span><span class="model-n">1</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-27b-q4-128k__probe.png"
+          data-name="Probe" data-model="qwen3.8-27b-q4-128k"
+          data-text="probe qwen3.8-27b-q4-128k probe qwen3.8 27b (stock, 128k context) -- probe…">
+        <div class="matte"><img src="assets/img/qwen3.8-27b-q4-128k__probe.png"
+             alt="Probe, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Probe</span>
+          <p class="blurb">Qwen3.8 27B (stock, 128k context) -- probe…</p>
+          <span class="slug">probe</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.8-27b-q6-mtp">
+    <h2 class="model" id="m-qwen3.8-27b-q6-mtp"><span class="model-name">qwen3.8-27b-q6-mtp</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-27b-q6-mtp__hamilton.png"
+          data-name="Pi Hamilton" data-model="qwen3.8-27b-q6-mtp"
+          data-text="pi hamilton qwen3.8-27b-q6-mtp hamilton cream dress dial, blued dauphine hands">
+        <div class="matte"><img src="assets/img/qwen3.8-27b-q6-mtp__hamilton.png"
+             alt="Pi Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Pi Hamilton</span>
+          <p class="blurb">Cream dress dial, blued dauphine hands</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-27b-q6-mtp__orbital.png"
+          data-name="Pi Orbital" data-model="qwen3.8-27b-q6-mtp"
+          data-text="pi orbital qwen3.8-27b-q6-mtp orbital orrery: sun, satellite, planet, comet">
+        <div class="matte"><img src="assets/img/qwen3.8-27b-q6-mtp__orbital.png"
+             alt="Pi Orbital, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Pi Orbital</span>
+          <p class="blurb">Orrery: sun, satellite, planet, comet</p>
+          <span class="slug">orbital</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-27b-q6-mtp__skeleton.png"
+          data-name="Pi Skeleton" data-model="qwen3.8-27b-q6-mtp"
+          data-text="pi skeleton qwen3.8-27b-q6-mtp skeleton openwork, turning gears, beating balance">
+        <div class="matte"><img src="assets/img/qwen3.8-27b-q6-mtp__skeleton.png"
+             alt="Pi Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Pi Skeleton</span>
+          <p class="blurb">Openwork, turning gears, beating balance</p>
+          <span class="slug">skeleton</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.8-flash-next-iq2xxs">
+    <h2 class="model" id="m-qwen3.8-flash-next-iq2xxs"><span class="model-name">qwen3.8-flash-next-iq2xxs</span><span class="model-n">3</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq2xxs__chronosphere.png"
+          data-name="Chronosphere" data-model="qwen3.8-flash-next-iq2xxs"
+          data-text="chronosphere qwen3.8-flash-next-iq2xxs chronosphere aurelia · &quot;chronosphere&quot; — the…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq2xxs__chronosphere.png"
+             alt="Chronosphere, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Chronosphere</span>
+          <p class="blurb">AURELIA · &quot;chronosphere&quot; — the…</p>
+          <span class="slug">chronosphere</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq2xxs__hamilton.png"
+          data-name="Hamilton" data-model="qwen3.8-flash-next-iq2xxs"
+          data-text="hamilton qwen3.8-flash-next-iq2xxs hamilton aurelia · &quot;heritage&quot; — hamilton-style…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq2xxs__hamilton.png"
+             alt="Hamilton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton</span>
+          <p class="blurb">AURELIA · &quot;heritage&quot; — Hamilton-style…</p>
+          <span class="slug">hamilton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq2xxs__openwork.png"
+          data-name="Openwork" data-model="qwen3.8-flash-next-iq2xxs"
+          data-text="openwork qwen3.8-flash-next-iq2xxs openwork aurelia · &quot;openwork&quot; — skeleton watch">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq2xxs__openwork.png"
+             alt="Openwork, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Openwork</span>
+          <p class="blurb">AURELIA · &quot;openwork&quot; — skeleton watch</p>
+          <span class="slug">openwork</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="qwen3.8-flash-next-iq3s">
+    <h2 class="model" id="m-qwen3.8-flash-next-iq3s"><span class="model-name">qwen3.8-flash-next-iq3s</span><span class="model-n">15</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__ephemeris-loom.png"
+          data-name="Ephemeris Loom" data-model="qwen3.8-flash-next-iq3s"
+          data-text="ephemeris loom qwen3.8-flash-next-iq3s ephemeris-loom conky clock (the astral…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__ephemeris-loom.png"
+             alt="Ephemeris Loom, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Ephemeris Loom</span>
+          <p class="blurb">Conky clock (the Astral…</p>
+          <span class="slug">ephemeris-loom</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__flying-tourbillon.png"
+          data-name="Flying Tourbillon" data-model="qwen3.8-flash-next-iq3s"
+          data-text="flying tourbillon qwen3.8-flash-next-iq3s flying-tourbillon conky clock">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__flying-tourbillon.png"
+             alt="Flying Tourbillon, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Flying Tourbillon</span>
+          <p class="blurb">Conky clock</p>
+          <span class="slug">flying-tourbillon</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__going-train.png"
+          data-name="Going Train" data-model="qwen3.8-flash-next-iq3s"
+          data-text="going train qwen3.8-flash-next-iq3s going-train conky clock">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__going-train.png"
+             alt="Going Train, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Going Train</span>
+          <p class="blurb">Conky clock</p>
+          <span class="slug">going-train</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__hamilton-42.png"
+          data-name="Hamilton 42" data-model="qwen3.8-flash-next-iq3s"
+          data-text="hamilton 42 qwen3.8-flash-next-iq3s hamilton-42 american railroad-style…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__hamilton-42.png"
+             alt="Hamilton 42, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Hamilton 42</span>
+          <p class="blurb">American railroad-style…</p>
+          <span class="slug">hamilton-42</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__heliotrope.png"
+          data-name="Heliotrope" data-model="qwen3.8-flash-next-iq3s"
+          data-text="heliotrope qwen3.8-flash-next-iq3s heliotrope ">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__heliotrope.png"
+             alt="Heliotrope, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Heliotrope</span>
+          
+          <span class="slug">heliotrope</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__intra-chrono.png"
+          data-name="Intra Chrono" data-model="qwen3.8-flash-next-iq3s"
+          data-text="intra chrono qwen3.8-flash-next-iq3s intra-chrono conky clock">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__intra-chrono.png"
+             alt="Intra Chrono, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Intra Chrono</span>
+          <p class="blurb">Conky clock</p>
+          <span class="slug">intra-chrono</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__long-exposure.png"
+          data-name="Long Exposure" data-model="qwen3.8-flash-next-iq3s"
+          data-text="long exposure qwen3.8-flash-next-iq3s long-exposure conky clock (the astral…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__long-exposure.png"
+             alt="Long Exposure, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Long Exposure</span>
+          <p class="blurb">Conky clock (the Astral…</p>
+          <span class="slug">long-exposure</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__modulus.png"
+          data-name="Modulus" data-model="qwen3.8-flash-next-iq3s"
+          data-text="modulus qwen3.8-flash-next-iq3s modulus ">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__modulus.png"
+             alt="Modulus, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Modulus</span>
+          
+          <span class="slug">modulus</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__openworked-calibre.png"
+          data-name="Openworked Calibre" data-model="qwen3.8-flash-next-iq3s"
+          data-text="openworked calibre qwen3.8-flash-next-iq3s openworked-calibre a skeletonised…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__openworked-calibre.png"
+             alt="Openworked Calibre, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Openworked Calibre</span>
+          <p class="blurb">A skeletonised…</p>
+          <span class="slug">openworked-calibre</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__retrograde-meridian.png"
+          data-name="Retrograde Meridian" data-model="qwen3.8-flash-next-iq3s"
+          data-text="retrograde meridian qwen3.8-flash-next-iq3s retrograde-meridian a one-off design.">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__retrograde-meridian.png"
+             alt="Retrograde Meridian, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Retrograde Meridian</span>
+          <p class="blurb">A one-off design.</p>
+          <span class="slug">retrograde-meridian</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__saros.png"
+          data-name="Saros" data-model="qwen3.8-flash-next-iq3s"
+          data-text="saros qwen3.8-flash-next-iq3s saros conky clock (the astral set).  the time it…">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__saros.png"
+             alt="Saros, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Saros</span>
+          <p class="blurb">Conky clock (the Astral set).  The time it…</p>
+          <span class="slug">saros</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__vantage-errant.png"
+          data-name="Vantage Errant" data-model="qwen3.8-flash-next-iq3s"
+          data-text="vantage errant qwen3.8-flash-next-iq3s vantage-errant ">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__vantage-errant.png"
+             alt="Vantage Errant, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Vantage Errant</span>
+          
+          <span class="slug">vantage-errant</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__vantage-field.png"
+          data-name="Vantage Field" data-model="qwen3.8-flash-next-iq3s"
+          data-text="vantage field qwen3.8-flash-next-iq3s vantage-field ">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__vantage-field.png"
+             alt="Vantage Field, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Vantage Field</span>
+          
+          <span class="slug">vantage-field</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__vantage-skeleton.png"
+          data-name="Vantage Skeleton" data-model="qwen3.8-flash-next-iq3s"
+          data-text="vantage skeleton qwen3.8-flash-next-iq3s vantage-skeleton ">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__vantage-skeleton.png"
+             alt="Vantage Skeleton, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Vantage Skeleton</span>
+          
+          <span class="slug">vantage-skeleton</span>
+        </figcaption>
+      </figure>
+      <figure class="card" tabindex="0"
+          data-img="assets/img/qwen3.8-flash-next-iq3s__ventura-shield.png"
+          data-name="Ventura Shield" data-model="qwen3.8-flash-next-iq3s"
+          data-text="ventura shield qwen3.8-flash-next-iq3s ventura-shield conky clock">
+        <div class="matte"><img src="assets/img/qwen3.8-flash-next-iq3s__ventura-shield.png"
+             alt="Ventura Shield, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Ventura Shield</span>
+          <p class="blurb">Conky clock</p>
+          <span class="slug">ventura-shield</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="group" data-model="unknown">
+    <h2 class="model" id="m-unknown"><span class="model-name">unknown</span><span class="model-n">1</span></h2>
+    <div class="grid">
+      <figure class="card" tabindex="0"
+          data-img="assets/img/unknown__boron-dial.png"
+          data-name="Boron" data-model="unknown"
+          data-text="boron unknown boron-dial the teal dial from the system-monitor panels">
+        <div class="matte"><img src="assets/img/unknown__boron-dial.png"
+             alt="Boron, an analogue clock face" loading="lazy" width="640" height="640"></div>
+        <figcaption>
+          <span class="name">Boron</span>
+          <p class="blurb">The teal dial from the system-monitor panels</p>
+          <span class="slug">boron-dial</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+<p class="empty hidden" id="none">Nothing matches that.</p>
+</main>
+
+<footer>
+  <span>Captured headlessly by <code>tools/capture/capture.lua</code> — the same code path the live
+  desktop clocks run, with no window manager in the loop.</span>
+  <span>640×640 PNG · transparent</span>
+</footer>
+
+<div id="box" role="dialog" aria-modal="true">
+  <button id="close" aria-label="Close">✕</button>
+  <button id="prev" class="nav" aria-label="Previous">‹</button>
+  <button id="next" class="nav" aria-label="Next">›</button>
+  <div><img id="big" alt=""><div id="cap"></div></div>
+</div>
+
+<script>
+const cards=[...document.querySelectorAll('.card')];
+const q=document.getElementById('q'),shown=document.getElementById('shown');
+const none=document.getElementById('none');
+
+function apply(){
+  const w=(q.value||'').toLowerCase().split(/\s+/).filter(Boolean);
+  let n=0;
+  for(const c of cards){
+    const t=c.dataset.text;
+    const ok=w.every(x=>t.includes(x));
+    c.classList.toggle('hidden',!ok);
+    if(ok)n++;
+  }
+  for(const g of document.querySelectorAll('.group')){
+    g.classList.toggle('hidden',!g.querySelector('.card:not(.hidden)'));
+  }
+  none.classList.toggle('hidden',n>0);
+  shown.textContent=w.length?`${n} shown`:'';
+}
+q.addEventListener('input',apply);
+
+const box=document.getElementById('box'),big=document.getElementById('big'),cap=document.getElementById('cap');
+let order=[],i=0;
+function view(k){
+  i=(k+order.length)%order.length;
+  const c=order[i];
+  big.src=c.dataset.img;
+  big.alt=c.dataset.name+', enlarged';
+  cap.innerHTML=`<b>${c.dataset.name}</b>${c.dataset.model} · ${i+1} of ${order.length}`;
+}
+function open(c){
+  order=cards.filter(x=>!x.classList.contains('hidden'));
+  box.classList.add('on');
+  document.body.style.overflow='hidden';
+  view(order.indexOf(c));
+}
+function close(){box.classList.remove('on');document.body.style.overflow=''}
+for(const c of cards){
+  c.addEventListener('click',()=>open(c));
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open(c)}});
+}
+document.getElementById('close').onclick=close;
+document.getElementById('prev').onclick=()=>view(i-1);
+document.getElementById('next').onclick=()=>view(i+1);
+box.addEventListener('click',e=>{if(e.target===box)close()});
+addEventListener('keydown',e=>{
+  if(!box.classList.contains('on'))return;
+  if(e.key==='Escape')close();
+  if(e.key==='ArrowLeft')view(i-1);
+  if(e.key==='ArrowRight')view(i+1);
+});
+
+const m=document.getElementById('matte');
+const setLight=on=>{document.body.classList.toggle('light',on);m.textContent=on?'Dark matte':'Light matte'};
+setLight(localStorage.getItem('matte')==='light');
+m.onclick=()=>{const on=!document.body.classList.contains('light');
+  localStorage.setItem('matte',on?'light':'dark');setLight(on)};
+</script>
+</body>
+</html>
