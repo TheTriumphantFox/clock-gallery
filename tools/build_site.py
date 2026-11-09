@@ -89,6 +89,15 @@ CREDIT = {"plan": "Claude Opus 5.5", "build": "Qwen3.8 Flash-Next IQ3_S"}
 # clock"), so their descriptions are written out here, taken from the clock
 # tree's README, which records what each face actually shows.
 BLURB = {
+    "claude-fable-5-2/khaki-field":
+        "A field watch: matte black dial, aged-lume numerals, an inner 24-hour ring, syringe "
+        "hands, date at 3, and a seconds hand that steps six times a second like a 21,600 vph movement.",
+    "claude-fable-5-2/skeleton":
+        "An openworked movement behind a Roman chapter ring. The going train is computed from "
+        "tooth counts, so barrel, wheels, escapement and hands agree; a 1 Hz balance swings.",
+    "claude-fable-5-2/kintsugi":
+        "No hands: a tenmoku plate cracked along the time and mended with gold. The heavy seam "
+        "is the hour, the long one the minute, a gold fleck each second; the cracks regrow daily.",
     "qwen3.8-flash-next-iq3s/ventura-shield":
         "A Hamilton Ventura with markers fanned out to the asymmetric dial edge.",
     "qwen3.8-flash-next-iq3s/going-train":

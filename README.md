@@ -1,6 +1,6 @@
 # Clock Gallery
 
-79 analogue clock faces, each one a Lua/Cairo program that
+82 analogue clock faces, each one a Lua/Cairo program that
 [Conky](https://github.com/brndnmtthws/conky) draws on a Linux desktop. This
 site is the **screenshots only** — the clock source lives elsewhere and is not
 published here.
@@ -11,7 +11,7 @@ screen, with no window manager, compositor or screen capture in the loop. That
 is why the hands, gears and moon phases come out crisp rather than as a
 photograph of a monitor.
 
-- 79 dials, 22 makers, one page
+- 82 dials, 23 makers, one page
 - 9 of them **co-authored** — Claude Opus 5.5 planned them, Qwen3.8 Flash-Next IQ3_S wrote the
   code — given their own section and a credit line on every card
 - a section on the **`/clock` skill** that produced most of them
