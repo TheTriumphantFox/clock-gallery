@@ -1,7 +1,7 @@
 [
-{"id":"claude-fable-5-2/khaki-field","name":"Khaki Field","blurb":"a field watch in the manner of the Hamilton…","file":"claude-fable-5-2__khaki-field.png"},
-{"id":"claude-fable-5-2/kintsugi","name":"Kintsugi","blurb":"a clock with no hands.","file":"claude-fable-5-2__kintsugi.png"},
-{"id":"claude-fable-5-2/skeleton","name":"Skeleton","blurb":"an openworked hand-wound movement behind a…","file":"claude-fable-5-2__skeleton.png"},
+{"id":"claude-fable-5.2/khaki-field","name":"Khaki Field","blurb":"a field watch in the manner of the Hamilton…","file":"claude-fable-5.2__khaki-field.png"},
+{"id":"claude-fable-5.2/kintsugi","name":"Kintsugi","blurb":"a clock with no hands.","file":"claude-fable-5.2__kintsugi.png"},
+{"id":"claude-fable-5.2/skeleton","name":"Skeleton","blurb":"an openworked hand-wound movement behind a…","file":"claude-fable-5.2__skeleton.png"},
 {"id":"claude-haiku-5.5/hamilton","name":"Hamilton","blurb":"Hamilton-style field watch: cream railroad…","file":"claude-haiku-5.5__hamilton.png"},
 {"id":"claude-haiku-5.5/orbital","name":"Orbital","blurb":"a clock with no hands. The hour, minute and…","file":"claude-haiku-5.5__orbital.png"},
 {"id":"claude-haiku-5.5/skeleton","name":"Skeleton","blurb":"Skeleton watch: the movement is the dial.…","file":"claude-haiku-5.5__skeleton.png"},
