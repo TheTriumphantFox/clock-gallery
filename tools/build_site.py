@@ -125,6 +125,38 @@ BLURB = {
     "qwen3.8-flash-next-iq3s/ephemeris-loom":
         "Planetary time as a horoscope wheel with the Ascendant held at 9 o'clock: a year of "
         "each body's path woven to a bead on the now ring, retrograde runs dashed.",
+    "gpt-6.1-terra/hamilton-field":
+        "A Hamilton-style field watch: black dial, an inner 24-hour ring and red seconds.",
+    "gpt-6.1-terra/skeleton-atelier":
+        "A gilt and steel gear train under an open dial.",
+    "gpt-6.1-terra/orbit-tide":
+        "Hours, minutes and seconds as bodies on their orbits.",
+    "gpt-6.2-astra/cairn-field-38":
+        "An olive field dial on a woven strap, with cream sword hands and an inner 24-hour ring.",
+    "gpt-6.2-astra/vellum-calibre-06":
+        "A rose-gold pocket watch: gilt gears under curved bridges behind a Roman chapter ring.",
+    "gpt-6.2-astra/sounding-plate-07":
+        "A bathymetric chart plate: depth contours, an isobath label and a moving survey marker.",
+    "gpt-6.2-astra/varve-press":
+        "Hands over folded sediment layers that change each day, beside a 24-hour core sample "
+        "and the date.",
+    "gpt-6.2-sol/ridgeline-38":
+        "A black field dial with cream numerals, an inner 24-hour ring and red-tipped seconds.",
+    "gpt-6.2-sol/palimpsest-calibre":
+        "A rose-gold case over gears and ruby bearings under a bronze bridge, with small seconds.",
+    "gpt-6.2-sol/tidal-plotter":
+        "A chart plate whose depth contours shift through the day, with a buoy marking the seconds.",
+    "gpt-6.2-sol/undertow":
+        "A teal bathymetric dial; the amber seconds marker leaves a seven-second wake.",
+    "gpt-6.2-sol/kern":
+        "No hands: a plum type block travels a square of hours, a vermilion one a square of "
+        "minutes, and a row of impressions counts the seconds.",
+    "ling-3.0-flash-ad-iq3_m/hamilton":
+        "A cream field dial with Roman cardinals, red seconds and a date window.",
+    "ling-3.0-flash-ad-iq3_m/skeleton":
+        "A dark open dial with faint bridge rings and blue hands.",
+    "ling-3.0-flash-ad-iq3_m/unique":
+        "A starfield dial with gold hands and a dotted orbit round the centre.",
 }
 
 
